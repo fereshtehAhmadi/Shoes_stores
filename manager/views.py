@@ -13,14 +13,6 @@ from manager.models import User
 from manager.serializer import (AdminRegisterationSerializer, )
 
 
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
-
 class AdminRegisterationView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
@@ -28,8 +20,7 @@ class AdminRegisterationView(APIView):
         serializer = AdminRegisterationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
-            token = get_tokens_for_user(user)
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({'msg': 'afareen...'}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
