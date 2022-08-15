@@ -5,12 +5,28 @@ from rest_framework.views import APIView
 from rest_framework import status, generics, views, permissions
 from rest_framework.response import Response
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
 from manager.models import User
-from manager.serializer import (AdminRegisterationSerializer, )
+from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, )
+
+
+class LoginAdminView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, format=None):
+        serializer = LoginAdminSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            username = serializer.data.get('username')
+            password = serializer.data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return Response({'msg':'login success...'}, status=status.HTTP_200_OK)
+        
+        return Response({'errors': {'non_field_errors':['username or password is not valid!!']}},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class AdminRegisterationView(APIView):
@@ -23,5 +39,4 @@ class AdminRegisterationView(APIView):
             return Response({'msg': 'registeration successfully...'}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
-
 

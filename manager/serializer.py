@@ -12,3 +12,10 @@ class AdminRegisterationSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class LoginAdminSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=200)
+    class Meta:
+        model = User
+        fields = ['username', 'password']
