@@ -14,7 +14,8 @@ from api_list import api_list
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.db.models import Count
 from accounts.models import Accounts, Validation
-from accounts.serializer import (PhoneSerializer, CodeSerializer, UserRegisterationSerializer)
+from accounts.serializer import (PhoneSerializer, CodeSerializer, UserRegisterationSerializer,
+                                 UserLoginSerializer)
 
 
 class SendPhoneNumber(APIView):
@@ -42,3 +43,19 @@ class RegisterationView(APIView):
                 valid.delete()
                 return Response(serializer2.data, status=status.HTTP_200_OK)
         return Response({'msg': 'your code is wrong!!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, format=None):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            username = serializer.data.get('username')
+            password = serializer.data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response({'errors': {'non_field_errors':['username or password is not valid!!']}},
+                        status=status.HTTP_404_NOT_FOUND)

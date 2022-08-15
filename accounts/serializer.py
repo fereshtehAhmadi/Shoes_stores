@@ -34,3 +34,10 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         user = User.objects.create(**validated_data)
         user.phone = phone
         return user
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=200)
+    class Meta:
+        model = User
+        fields = ['username', 'password']
