@@ -15,3 +15,12 @@ class Accounts(models.Model):
     
     def __str__(self):
         return self.name
+
+
+class Validation(models.Model):
+    phone = phone = models.CharField(max_length=11, unique=True,
+                            validators=[RegexValidator(regex=r'09(\d{9})$')])
+    code = models.CharField(max_length=4)
+    
+    def __str__(self):
+        return self.phone
