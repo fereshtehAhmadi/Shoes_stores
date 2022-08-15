@@ -1,5 +1,5 @@
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework import status, generics, views, permissions
@@ -12,6 +12,10 @@ from django.shortcuts import get_object_or_404
 from manager.models import User
 from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
                                 AdminManagerSerializer, )
+
+class IsStaffUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_staff
 
 
 class LoginAdminView(APIView):
@@ -44,7 +48,7 @@ class AdminRegisterationView(APIView):
 
 class AdminProfileView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffUser]
     def get(self, request, format=None):
         user = User.objects.get(id=request.user.id)
         serializer = AdminPanelSerializer(user)
