@@ -58,7 +58,6 @@ class AdminProfileView(APIView):
             return Response({'msg': 'your profile was update...'}, status=status.HTTP_200_OK)
 
 
-
 class AdminListView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminUser]
@@ -70,7 +69,7 @@ class AdminListView(APIView):
 
 class AdminDeleteView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAdminUser]       
+    permission_classes = [IsAdminUser]    
     def delete(self, request, format=None):
         user = User.objects.get(id=request.user.id)
         user.delete()
