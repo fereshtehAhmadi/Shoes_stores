@@ -10,7 +10,8 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
 from manager.models import User
-from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, )
+from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
+                                )
 
 
 class LoginAdminView(APIView):
@@ -40,3 +41,18 @@ class AdminRegisterationView(APIView):
         
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
+
+class AdminProfileView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        user = User.objects.get(id=request.user.id)
+        serializer = AdminPanelSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, fromat=None):
+        user = User.objects.get(id=request.user.id)
+        serializer = AdminPanelSerializer(user, data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'msg': 'your profile was update...'}, status=status.HTTP_200_OK)
