@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 
 from manager.models import User
 from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
-                                )
+                                AdminManagerSerializer, )
 
 
 class LoginAdminView(APIView):
@@ -56,3 +56,22 @@ class AdminProfileView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'your profile was update...'}, status=status.HTTP_200_OK)
+
+
+
+class AdminListView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminUser]
+    def get(self, request, format=None):
+        user = User.objects.all()
+        serializer = AdminManagerSerializer(user, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class AdminDeleteView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminUser]       
+    def delete(self, request, format=None):
+        user = User.objects.get(id=request.user.id)
+        user.delete()
+        return Response({'msg': 'deleted....'}, status=status.HTTP_204_NO_CONTENT)

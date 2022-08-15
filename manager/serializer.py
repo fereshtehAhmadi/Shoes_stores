@@ -26,3 +26,8 @@ class AdminPanelSerializer(serializers.ModelSerializer):
         model = User
         exclude = ['id', 'password', 'is_active', 'is_admin', 'is_staff', 'created_at', 'updated_at', 'last_login']
 
+
+class AdminManagerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ['password', 'updated_at', 'is_active']
