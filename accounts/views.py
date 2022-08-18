@@ -7,14 +7,14 @@ from rest_framework.response import Response
 
 from random import randint
 from kavenegar import *
-from social_media.settings import kave_negar_token_send
+from shoe_stores.settings import kave_negar_token_send
 
 from api_list import api_list
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.db.models import Count
 from accounts.models import Accounts, Validation
-from accounts.serializer import (PhoneSerializer, CodeSerializer, UserRegisterationSerializer,
+from accounts.serializer import (PhoneSerializer, UserRegisterationSerializer,
                                  UserLoginSerializer)
 
 
@@ -27,7 +27,7 @@ class SendPhoneNumber(APIView):
             valid = serializer.save()
             valid.code = code
             valid.save()
-            kave_negar_token_send(serializer.data['phone'], int(code))
+            # kave_negar_token_send(serializer.data['phone'], int(code))
             return Response(valid.id, status=status.HTTP_201_CREATED)
 
 
@@ -35,14 +35,11 @@ class RegisterationView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request, pk, format=None):
         valid = Validation.objects.get(id=pk)
-        serializer = CodeSerializer(data=request.data, context={'valid': phone})
+        serializer = UserRegisterationSerializer(data=request.data, context={'valid': valid})
         if serializer.is_valid(raise_exception=True):
-            serializer2 = UserRegisterationSerializer(request.data)
-            if serializer2.is_valid(raise_exception=True):
-                serializer2.save()
-                valid.delete()
-                return Response(serializer2.data, status=status.HTTP_200_OK)
-        return Response({'msg': 'your code is wrong!!'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'msg': 'your code was wrong!!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginView(APIView):
