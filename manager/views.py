@@ -1,5 +1,5 @@
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, BasePermission
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework import status, generics, views, permissions
@@ -13,10 +13,6 @@ from manager.models import User
 from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
                                 AdminManagerSerializer, )
 
-class IsStaffUser(BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.is_staff
-
 
 class LoginAdminView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -26,6 +22,7 @@ class LoginAdminView(APIView):
             username = serializer.data.get('username')
             password = serializer.data.get('password')
             user = authenticate(username=username, password=password)
+                    
             if user is not None:
                 login(request, user)
                 return Response({'msg':'login success...'}, status=status.HTTP_200_OK)
@@ -48,7 +45,7 @@ class AdminRegisterationView(APIView):
 
 class AdminProfileView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsStaffUser]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         user = User.objects.get(id=request.user.id)
         serializer = AdminPanelSerializer(user)
@@ -78,3 +75,11 @@ class AdminDeleteView(APIView):
         user = User.objects.get(id=request.user.id)
         user.delete()
         return Response({'msg': 'deleted....'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminLogout(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        logout(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
