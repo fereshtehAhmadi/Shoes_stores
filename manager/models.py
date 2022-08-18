@@ -7,7 +7,7 @@ from django.core.validators import RegexValidator
 
 class UserManager(BaseUserManager):
     def create_user(self, username, name, phone, address, national_code, bank_account_number, password=None, password2=None):
-        if not name or not phone:
+        if not username or not phone:
             raise ValueError('please fill in all fields!!')
 
         user = self.model(
@@ -16,10 +16,12 @@ class UserManager(BaseUserManager):
             phone=phone,
             address=address,
             national_code=national_code,
-            bank_account_number=bank_account_number,
+            bank_account_number= bank_account_number,
         )
 
         user.set_password(password)
+        user.is_admin = False
+        user.is_active = True
         user.save(using=self._db)
         return user
 
@@ -28,14 +30,17 @@ class UserManager(BaseUserManager):
         user = self.create_user(
             username,
             name=name,
-            password=password,
             phone=phone,
             address=address,
             national_code=national_code,
             bank_account_number=bank_account_number,
+            password=password,
         )
+        user.is_admin = True
+        user.is_active = True
         user.save(using=self._db)
         return user
+
 
 
 class User(AbstractBaseUser):
@@ -48,7 +53,6 @@ class User(AbstractBaseUser):
     bank_account_number = models.CharField(max_length=24)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -66,3 +70,6 @@ class User(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return True
 
+    @property
+    def is_staff(self):
+        return True

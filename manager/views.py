@@ -22,6 +22,7 @@ class LoginAdminView(APIView):
             username = serializer.data.get('username')
             password = serializer.data.get('password')
             user = authenticate(username=username, password=password)
+                    
             if user is not None:
                 login(request, user)
                 return Response({'msg':'login success...'}, status=status.HTTP_200_OK)
