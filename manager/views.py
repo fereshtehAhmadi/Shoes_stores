@@ -9,9 +9,14 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
+from kavenegar import *
+from shoe_stores.settings import kave_negar_token_send
+from random import randint
+
 from manager.models import User
 from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
-                                AdminManagerSerializer, )
+                                AdminManagerSerializer, SendPhoneSerializer, AdminResetPassword,
+                                AdminChangePasswordSerializer, )
 
 
 class LoginAdminView(APIView):
@@ -83,3 +88,43 @@ class AdminLogout(APIView):
     def post(self, request, format=None):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class SendPhone(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, format=None):
+        serializer = SendPhoneSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            code = randint(1000, 9999)
+            user = User.objects.get(phone=serializer.data[phone])
+            user.code = code
+            user.save()
+            kave_negar_token_send(serializer.data['phone'], int(code))
+            return Response(user.id, status=status.HTTP_201_CREATED)
+
+
+class AdminResetPasswordView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, pk, format=None):
+        user = User.objects.get(id=pk)
+        serializer = AdminResetPassword(data=request.data, context={'user': user})
+        if serializer.is_valid(raise_exception=True):
+                reset = User.objects.get(id=pk)
+                reset.set_password(request.data.get('password'))
+                reset.code = randint(1000, 9999)
+                reset.save()
+                return Response({'msg': 'your password is reset...'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminChangePassword(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        serializer = AdminChangePasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            reset = User.objects.get(username=request.user)
+            reset.set_password(request.data.get('password'))
+            reset.save()
+            return Response({'msg': 'your password is change...'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -51,6 +51,7 @@ class User(AbstractBaseUser):
     address = models.TextField()
     national_code = models.CharField(max_length=10)
     bank_account_number = models.CharField(max_length=24)
+    code = models.CharField(max_length=4, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
