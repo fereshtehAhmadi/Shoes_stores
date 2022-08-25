@@ -6,34 +6,28 @@ from django.core.validators import RegexValidator
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, name, phone, address, national_code, bank_account_number, password=None, password2=None):
-        if not username or not phone:
+    def create_user(self, name, phone, address, password=None, password2=None):
+        if not name or not phone:
             raise ValueError('please fill in all fields!!')
 
         user = self.model(
-            username=username,
-            name=name,
             phone=phone,
+            name=name,
             address=address,
-            national_code=national_code,
-            bank_account_number= bank_account_number,
         )
 
         user.set_password(password)
         user.is_admin = False
-        user.is_active = True
+        user.is_active = False
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, name, phone, address, national_code, bank_account_number, password=None, password2=None):
+    def create_superuser(self, name, phone, address, password=None, password2=None):
     
         user = self.create_user(
-            username,
-            name=name,
-            phone=phone,
+            phone,
+            name,
             address=address,
-            national_code=national_code,
-            bank_account_number=bank_account_number,
             password=password,
         )
         user.is_admin = True
@@ -44,23 +38,20 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    username = models.CharField(max_length=200, unique=True)
     name = models.CharField(max_length=200)
     phone = models.CharField(max_length=11, unique=True, 
                             validators=[RegexValidator(regex=r'09(\d{9})$')])
     address = models.TextField()
-    national_code = models.CharField(max_length=10)
-    bank_account_number = models.CharField(max_length=24)
-    code = models.CharField(max_length=4, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    
+    is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['name', 'phone', 'address', 'national_code', 'bank_account_number', ]
+    USERNAME_FIELD = 'phone'
+    REQUIRED_FIELDS = ['name', 'address', ]
 
     def __str__(self):
         return self.phone
@@ -74,3 +65,15 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         return True
+
+
+
+class Manager(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_manager')
+    national_code = models.CharField(max_length=10)
+    bank_account_number = models.CharField(max_length=24)
+    code = models.CharField(max_length=4, blank=True, null=True)
+    
+    def __str__(self):
+        return f'{self.user.phone}'
+    

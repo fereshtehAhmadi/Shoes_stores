@@ -1,16 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
+from manager.models import User
 from django.core.validators import RegexValidator
 
 
 class Accounts(AbstractBaseUser):
-    name = models.CharField(max_length=30)
-    phone = models.CharField(max_length=11, unique=True, 
-                            validators=[RegexValidator(regex=r'09(\d{9})$')])
-    address = models.TextField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     postal_code = models.CharField(max_length=10, validators=[RegexValidator(regex=r'(\d{10})$')])
     wallet = models.PositiveIntegerField(default=0)
-    password = models.CharField(max_length=200)
     
     def __str__(self):
         return self.name

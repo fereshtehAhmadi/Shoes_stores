@@ -47,10 +47,11 @@ class UserLoginView(APIView):
     def post(self, request, format=None):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            username = serializer.data.get('username')
+            phone = serializer.data.get('phone')
             password = serializer.data.get('password')
-            user = authenticate(username=username, password=password)
+            user = authenticate(phone=phone, password=password)
             if user is not None:
+                print('****************************************')
                 login(request, user)
                 return Response(serializer.data, status=status.HTTP_200_OK)
         

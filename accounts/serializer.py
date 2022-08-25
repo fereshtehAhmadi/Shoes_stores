@@ -54,7 +54,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=200)
+    phone = serializers.CharField(max_length=11)
     class Meta:
         model = Accounts
         fields = ['phone', 'password']

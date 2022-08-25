@@ -1,11 +1,12 @@
 from rest_framework import serializers
-from manager.models import User
+from manager.models import User, Manager
+
 
 class AdminRegisterationSerializer(serializers.ModelSerializer):
     password2=serializers.CharField(style={'input_type':'password'}, write_only=True)
     class Meta:
         model = User
-        fields = ['username', 'name', 'phone', 'address', 'national_code', 'bank_account_number', 'password', 'password2']
+        fields = ['name', 'phone', 'address', 'password', 'password2']
         extra_kwargs={
             'password':{'write_only': True}
         }
@@ -21,23 +22,47 @@ class AdminRegisterationSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         user = User.objects.create(**validated_data, is_active=True)
         user.set_password(validated_data['password'])
+        user.is_active = True
         user.save()
+        manager = Manager.objects.create(
+            user = user
+        )
         return user
 
 
 class LoginAdminSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=200)
+    phone = serializers.CharField(max_length=11)
     
     class Meta:
         model = User
-        fields = ['username', 'password']
+        fields = ['phone', 'password']
+
+
+class ManagerInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manager
+        fields = ['national_code', 'bank_account_number']
+    
+    def create(self, validated_data):
+        user = self.context['user'].id
+        manager = Manager.objects.get(user=user)
+        manager.national_code = validated_data['national_code']
+        manager.bank_account_number = validated_data['bank_account_number']
+        manager.save()
+        return manager
 
 
 class AdminPanelSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['id', 'password', 'is_active', 'is_admin', 'is_staff', 'created_at', 'updated_at', 'last_login']
+        exclude = ['id', 'password', 'is_active', 'is_admin', 'created_at', 'updated_at', 'last_login']
 
+
+class AdminManagerPanelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manager
+        exclude = ['id']
+        depth = 1
 
 class AdminManagerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,6 +70,7 @@ class AdminManagerSerializer(serializers.ModelSerializer):
         exclude = ['password', 'updated_at', 'is_active']
 
 
+# ------------------------------------------------------------------------------
 class SendPhoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -64,7 +90,7 @@ class AdminResetPassword(serializers.ModelSerializer):
     password2 = serializers.CharField(max_length=255, 
                                      style = {'input_type': 'password'}, write_only=True)
     class Meta:
-        model = User
+        model = Manager
         fields = ['code', 'password', 'password2']
     
     def validate(self, attrs):
@@ -85,6 +111,7 @@ class AdminChangePasswordSerializer(serializers.Serializer):
     password2 = serializers.CharField(max_length=255, 
                                      style = {'input_type': 'password'}, write_only=True)
     class Meta:
+        model = User
         fields = ['password', 'password2']
     
     def validate(self, attrs):

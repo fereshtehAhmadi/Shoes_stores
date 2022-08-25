@@ -13,10 +13,11 @@ from kavenegar import *
 from shoe_stores.settings import kave_negar_token_send
 from random import randint
 
-from manager.models import User
-from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, AdminPanelSerializer,
-                                AdminManagerSerializer, SendPhoneSerializer, AdminResetPassword,
-                                AdminChangePasswordSerializer, )
+from manager.models import User, Manager
+from manager.serializer import (AdminRegisterationSerializer, LoginAdminSerializer, ManagerInformationSerializer,
+                                AdminPanelSerializer,AdminManagerSerializer, SendPhoneSerializer,
+                                AdminResetPassword, AdminChangePasswordSerializer, AdminManagerPanelSerializer, 
+                                )
 
 
 class LoginAdminView(APIView):
@@ -24,9 +25,9 @@ class LoginAdminView(APIView):
     def post(self, request, format=None):
         serializer = LoginAdminSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            username = serializer.data.get('username')
+            phone = serializer.data.get('phone')
             password = serializer.data.get('password')
-            user = authenticate(username=username, password=password)
+            user = authenticate(phone=phone, password=password)
                     
             if user is not None:
                 login(request, user)
@@ -48,17 +49,44 @@ class AdminRegisterationView(APIView):
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AdminProfileView(APIView):
+class ManagerInformationView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, pk, format=None):
+        user = User.objects.get(id=pk)
+        serializer = ManagerInformationSerializer(data=request.data, context={'user':user})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminShowProfileView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         user = User.objects.get(id=request.user.id)
-        serializer = AdminPanelSerializer(user)
+        manager = Manager.objects.get(user__id=user.id)        
+        serializer = AdminManagerPanelSerializer(manager)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
+class AdminEditView(APIView):    
     def put(self, request, fromat=None):
         user = User.objects.get(id=request.user.id)
         serializer = AdminPanelSerializer(user, data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'msg': 'your profile was update...'}, status=status.HTTP_200_OK)
+
+
+class AdminManagerEditView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    def put(self, request, fromat=None):
+        user = User.objects.get(id=request.user.id)
+        manager = Manager.objects.get(user__id=user.id)
+        serializer = AdminManagerPanelSerializer(manager, data = request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'your profile was update...'}, status=status.HTTP_200_OK)
@@ -69,7 +97,7 @@ class AdminListView(APIView):
     permission_classes = [IsAdminUser]
     def get(self, request, format=None):
         user = User.objects.all()
-        serializer = AdminManagerSerializer(user, many=True)
+        serializer = AdminManagerPanelSerializer(user, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
@@ -88,8 +116,8 @@ class AdminLogout(APIView):
     def post(self, request, format=None):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
 
+# -----------------------------------------------------------------------------------------------
 class SendPhone(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request, format=None):
@@ -106,7 +134,7 @@ class SendPhone(APIView):
 class AdminResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request, pk, format=None):
-        user = User.objects.get(id=pk)
+        user = Manager.objects.get(user__id=pk)
         serializer = AdminResetPassword(data=request.data, context={'user': user})
         if serializer.is_valid(raise_exception=True):
                 reset = User.objects.get(id=pk)
